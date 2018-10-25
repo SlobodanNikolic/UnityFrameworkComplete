@@ -138,6 +138,27 @@ public class FirebaseControler : MonoBehaviour {
         }
     }
 
+    public void UpdateUsersEmail(string email){
+        Firebase.Auth.FirebaseUser user = auth.CurrentUser;
+        if (user != null)
+        {
+            user.UpdateEmailAsync(email).ContinueWith(task => {
+                if (task.IsCanceled)
+                {
+                    Debug.LogError("UpdateEmailAsync was canceled.");
+                    return;
+                }
+                if (task.IsFaulted)
+                {
+                    Debug.LogError("UpdateEmailAsync encountered an error: " + task.Exception);
+                    return;
+                }
+
+                Debug.Log("User email updated successfully.");
+            });
+        }
+    }
+
     /// <summary>
     /// The play services version must be up to date, so the Firebase features could work.
     /// This function checks the play services version.
