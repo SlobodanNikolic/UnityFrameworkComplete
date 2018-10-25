@@ -10,17 +10,13 @@ using UnityEngine.Purchasing;
 // Deriving the Purchaser class from IStoreListener enables it to receive messages from Unity Purchasing.
 public class Purchaser : MonoBehaviour, IStoreListener
 {
-	public string smallPackId;
-	public string mediumPackId;
-	public string bigPackId;
     public List<string> consumableIds;
-    public List<string> consumableCoinAmounts;
     public List<UnityEvent> consumablePurchasedActions;
-	public string noAdsId;
+    public List<string> nonConsumableIds;
+    public List<UnityEvent> nonConsumablePurchasedActions;
 
-	public int smallPackCoinAmount;
-	public int mediumPackCoinAmount;
-	public int bigPackCoinAmount;
+    public string noAdsId;
+
 
 	private static IStoreController m_StoreController;          // The Unity Purchasing system.
 	private static IExtensionProvider m_StoreExtensionProvider; // The store-specific Purchasing subsystems.
@@ -79,8 +75,14 @@ public class Purchaser : MonoBehaviour, IStoreListener
             builder.AddProduct(id, ProductType.Consumable);
         }
 
-		// Continue adding the non-consumable product.
-		builder.AddProduct(kProductIDNonConsumable, ProductType.NonConsumable);
+        foreach (string id in nonConsumableIds)
+        {
+            builder.AddProduct(id, ProductType.NonConsumable);
+        }
+
+
+        // Continue adding the non-consumable product.
+        builder.AddProduct(kProductIDNonConsumable, ProductType.NonConsumable);
 		builder.AddProduct(noAdsId, ProductType.NonConsumable);
 
 		// And finish adding the subscription product. Notice this uses store-specific IDs, illustrating
@@ -105,48 +107,18 @@ public class Purchaser : MonoBehaviour, IStoreListener
 	}
 
 
-	public void BuyConsumable()
-	{
-	    Debug.Log ("Buy Consumable");
-		// Buy the consumable product using its general identifier. Expect a response either 
-		// through ProcessPurchase or OnPurchaseFailed asynchronously.
-		BuyProductID(kProductIDConsumable);
-	}
-
     public void BuyConsumableByIndex(int index){
         BuyProductID(consumableIds[index]);
     }
 
-	public void BuySmallPack()
-	{
-		Debug.Log ("Buy Small Pack");
-		// Buy the consumable product using its general identifier. Expect a response either 
-		// through ProcessPurchase or OnPurchaseFailed asynchronously.
-		BuyProductID(smallPackId);
-	}
+	
 
-	public void BuyMediumPack()
+	public void BuyNonConsumableByIndex(int index)
 	{
-		Debug.Log ("Buy Medium Pack");
-		// Buy the consumable product using its general identifier. Expect a response either 
-		// through ProcessPurchase or OnPurchaseFailed asynchronously.
-		BuyProductID(mediumPackId);
-	}
-
-	public void BuyBigPack()
-	{
-		Debug.Log ("Buy Big Pack");
-		// Buy the consumable product using its general identifier. Expect a response either 
-		// through ProcessPurchase or OnPurchaseFailed asynchronously.
-		BuyProductID(bigPackId);
-	}
-
-	public void BuyNonConsumable()
-	{
-		// Buy the non-consumable product using its general identifier. Expect a response either 
-		// through ProcessPurchase or OnPurchaseFailed asynchronously.
-		BuyProductID(kProductIDNonConsumable);
-	}
+        // Buy the non-consumable product using its general identifier. Expect a response either 
+        // through ProcessPurchase or OnPurchaseFailed asynchronously.
+        BuyProductID(nonConsumableIds[index]);
+    }
 
 
 	public void BuyNoAds()
@@ -179,8 +151,8 @@ public class Purchaser : MonoBehaviour, IStoreListener
 
 	void BuyProductID(string productId)
 	{
-		App.ui.SetPopUp ("UIWaitPurchase");
-		Invoke ("CheckForPurchaseDelay", 30f);
+		//App.ui.SetPopUp ("UIWaitPurchase");
+		//Invoke ("CheckForPurchaseDelay", 30f);
 
 		Debug.Log ("Buy product id " + productId);
 		// If Purchasing has been initialized ...
@@ -204,7 +176,7 @@ public class Purchaser : MonoBehaviour, IStoreListener
 			// Otherwise ...
 			else
 			{
-                App.ui.SetPopUp ("UIWaitPurchase", false);
+                //App.ui.SetPopUp ("UIWaitPurchase", false);
                 //TODO: Otvoriti popup koji kaze da je failovao purchase
 				// ... report the product look-up failure situation  
 				Debug.Log("BuyProductID: FAIL. Not purchasing product, either is not found or is not available for purchase");
@@ -217,7 +189,7 @@ public class Purchaser : MonoBehaviour, IStoreListener
 			// retrying initiailization.
 			Debug.Log("BuyProductID FAIL. Not initialized.");
             //TODO:Otvoriti popup koji kaze zasto je fail
-            App.ui.SetPopUp ("UIWaitPurchase", false);
+            //App.ui.SetPopUp ("UIWaitPurchase", false);
 
 			InitializePurchasing();
 		}
@@ -243,10 +215,9 @@ public class Purchaser : MonoBehaviour, IStoreListener
 		if (Application.platform == RuntimePlatform.IPhonePlayer || 
 			Application.platform == RuntimePlatform.OSXPlayer)
 		{
+            //todo:
 			//Ovde izbaciti popup
-
-			//App.ui.SetPopUp ("UISettings", true);
-			App.ui.SetPopUp ("UIRestorePurchase");
+  			//App.ui.SetPopUp ("UIRestorePurchase");
 
 			// ... begin restoring purchases
 			Debug.Log("RestorePurchases started ...");
@@ -256,14 +227,14 @@ public class Purchaser : MonoBehaviour, IStoreListener
 			// Begin the asynchronous process of restoring purchases. Expect a confirmation response in 
 			// the Action<bool> below, and ProcessPurchase if there are previously purchased products to restore.
 			apple.RestoreTransactions((result) => {
-                App.ui.SetPopUp("UIRestorePurchase", false);
+                //App.ui.SetPopUp("UIRestorePurchase", false);
 				if(result){
 					Debug.Log("Purchases restored");
                     //TODO: Popup
 				}
 				else{
 					Debug.Log("Purchases not restored");
-
+                    //todo: popup
 				}
 				// The first phase of restoration. If no more responses are received on ProcessPurchase then 
 				// no purchases are available to be restored.
@@ -317,14 +288,14 @@ public class Purchaser : MonoBehaviour, IStoreListener
 
 	public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs args) 
 	{
-        App.ui.SetPopUp("UIWaitPurchase", false);
+        //App.ui.SetPopUp("UIWaitPurchase", false);
 
 		// A consumable product has been purchased by this user.
 		if (String.Equals(args.purchasedProduct.definition.id, kProductIDConsumable, StringComparison.Ordinal))
 		{
 			Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
-			// The consumable item has been successfully purchased, add 100 coins to the player's in-game score.
-			
+            // The consumable item has been successfully purchased, add 100 coins to the player's in-game score.
+            return PurchaseProcessingResult.Complete;
 		}
 
         for (int i = 0; i < consumableIds.Count; i++){
@@ -333,6 +304,8 @@ public class Purchaser : MonoBehaviour, IStoreListener
                 Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
                 // The consumable item has been successfully purchased, add coins to the player's in-game score.
                 consumablePurchasedActions[i].Invoke();
+                return PurchaseProcessingResult.Complete;
+
             }
         }
 		
@@ -341,41 +314,58 @@ public class Purchaser : MonoBehaviour, IStoreListener
 		if (String.Equals(args.purchasedProduct.definition.id, kProductIDNonConsumable, StringComparison.Ordinal))
 		{
 			Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
-		}
-		else if (String.Equals(args.purchasedProduct.definition.id, noAdsId, StringComparison.Ordinal))
+            return PurchaseProcessingResult.Complete;
+
+        }
+
+        for (int i = 0; i < nonConsumableIds.Count; i++)
+        {
+            if (String.Equals(args.purchasedProduct.definition.id, nonConsumableIds[i], StringComparison.Ordinal))
+            {
+                Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
+                // The consumable item has been successfully purchased, add coins to the player's in-game score.
+                nonConsumablePurchasedActions[i].Invoke();
+                return PurchaseProcessingResult.Complete;
+
+            }
+        }
+
+        if (String.Equals(args.purchasedProduct.definition.id, noAdsId, StringComparison.Ordinal))
 		{
 			Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
 			PlayerPrefs.SetString("ads", false.ToString());
-			//App.ads.adsEnabled = false;
-            App.ui.SetPopUp ("UIWaitPurchase", false);
+            //App.ads.adsEnabled = false;
+            //App.ui.SetPopUp ("UIWaitPurchase", false);
             //TODO: vratiti sve ovo
-			//App.ads.removeAdsButton.SetActive (false);
-			//App.ads.removeAdsButtonShop.SetActive (false);
-			//App.ads.removeAdsButtonGO.SetActive (false);
+            //App.ads.removeAdsButton.SetActive (false);
+            //App.ads.removeAdsButtonShop.SetActive (false);
+            //App.ads.removeAdsButtonGO.SetActive (false);
+            return PurchaseProcessingResult.Complete;
 
-		}
-		// Or ... a subscription product has been purchased by this user.
-		else if (String.Equals(args.purchasedProduct.definition.id, kProductIDSubscription, StringComparison.Ordinal))
+
+        }
+        // Or ... a subscription product has been purchased by this user.
+        else if (String.Equals(args.purchasedProduct.definition.id, kProductIDSubscription, StringComparison.Ordinal))
 		{
 			Debug.Log(string.Format("ProcessPurchase: PASS. Product: '{0}'", args.purchasedProduct.definition.id));
-		}
-		// Or ... an unknown product has been purchased by this user. Fill in additional products here....
-		else 
+            return PurchaseProcessingResult.Complete;
+
+        }
+        // Or ... an unknown product has been purchased by this user. Fill in additional products here....
+        else 
 		{
             //TODO: popup
 			Debug.Log(string.Format("ProcessPurchase: FAIL. Unrecognized product: '{0}'", args.purchasedProduct.definition.id));
-			App.ui.SetPopUp ("UIWaitPurchase", true);
+            //App.ui.SetPopUp ("UIWaitPurchase", true);
+            return PurchaseProcessingResult.Complete;
 
-		}
+        }
 
         // Return a flag indicating whether this product has completely been received, or if the application needs 
         // to be reminded of this purchase at next app launch. Use PurchaseProcessingResult.Pending when still 
         // saving purchased products to the cloud, and when that save is delayed. 
 
-        App.localDB.Save();
-	
-		return PurchaseProcessingResult.Complete;
-	}
+    }
 
 
 	public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
@@ -383,7 +373,7 @@ public class Purchaser : MonoBehaviour, IStoreListener
 		// A product purchase attempt did not succeed. Check failureReason for more detail. Consider sharing 
 		// this reason with the user to guide their troubleshooting actions.
 		Debug.Log(string.Format("OnPurchaseFailed: FAIL. Product: '{0}', PurchaseFailureReason: {1}", product.definition.storeSpecificId, failureReason));
-		App.ui.SetPopUp ("UIWaitPurchase", true);
+		//App.ui.SetPopUp ("UIWaitPurchase", true);
         //TODO:Popup
 
 	}
